@@ -1,0 +1,2398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Match Fun - 中英文单词消消乐</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF6B6B',
+            secondary: '#4ECDC4',
+            accent: '#FFD166',
+            background: '#F7FFF7',
+            text: '#1A535C'
+          },
+          fontFamily: {
+            sans: ['Inter', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+          animation: {
+            'bounce-short': 'bounce 0.5s ease-in-out 2',
+            'scale-in': 'scaleIn 0.3s ease-out forwards',
+            'scale-out': 'scaleOut 0.3s ease-in forwards',
+            'shake': 'shake 0.5s ease-in-out',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            scaleIn: {
+              '0%': { transform: 'scale(0)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
+            },
+            scaleOut: {
+              '0%': { transform: 'scale(1)', opacity: '1' },
+              '100%': { transform: 'scale(0)', opacity: '0' },
+            },
+            shake: {
+              '0%, 100%': { transform: 'translateX(0)' },
+              '25%': { transform: 'translateX(-5px)' },
+              '75%': { transform: 'translateX(5px)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-shadow {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        opacity: 0;
+        animation: confetti-fall 5s ease-in-out infinite;
+      }
+      @keyframes confetti-fall {
+        0% {
+          transform: translateY(-100vh) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+    }
+  </style>
+</head>
+<body class="bg-background min-h-screen font-sans text-text overflow-x-hidden">
+  <!-- 游戏背景 - 简约纯色背景 -->
+  <div class="fixed inset-0 z-0 bg-gradient-to-br from-blue-50 to-purple-50"></div>
+
+  <!-- 游戏容器 -->
+  <div class="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+    <!-- 右上角导航菜单 -->
+    <div class="absolute top-2 right-2 sm:top-4 sm:right-4 z-50">
+      <button id="main-menu-toggle-btn" class="bg-white bg-opacity-90 hover:bg-opacity-100 text-primary font-bold py-1 sm:py-2 px-3 sm:px-4 rounded-full shadow-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary">
+        <i class="fa fa-bars"></i>
+        <span class="ml-1 sm:ml-2 hidden sm:inline">菜单</span>
+      </button>
+      
+      <!-- 下拉菜单 -->
+      <div id="main-game-menu" class="hidden absolute right-0 mt-2 w-44 sm:w-48 bg-white rounded-xl shadow-2xl overflow-hidden border-2 border-primary z-50">
+        <div class="py-2">
+          <button id="main-menu-vocab-book-btn" class="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-200 flex items-center">
+            <i class="fa fa-book text-blue-500 mr-3"></i>
+            <span>生词本</span>
+          </button>
+          <button id="main-menu-word-library-btn" class="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors duration-200 flex items-center">
+            <i class="fa fa-database text-green-500 mr-3"></i>
+            <span>词库管理</span>
+          </button>
+          <button id="main-menu-settings-btn" class="w-full text-left px-4 py-3 hover:bg-purple-50 transition-colors duration-200 flex items-center">
+            <i class="fa fa-cog text-purple-500 mr-3"></i>
+            <span>设置</span>
+          </button>
+          <button id="main-menu-score-history-btn" class="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors duration-200 flex items-center">
+            <i class="fa fa-trophy text-orange-500 mr-3"></i>
+            <span>历史得分</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- 游戏标题 Banner -->
+    <header class="text-center mb-8 relative">
+      <div class="bg-gradient-to-r from-primary to-secondary rounded-2xl shadow-xl p-6 relative overflow-hidden">
+        <!-- 装饰元素 -->
+        <div class="absolute top-0 left-0 w-full h-full opacity-10">
+          <div class="absolute top-2 left-10 w-8 h-8 bg-white rounded-full"></div>
+          <div class="absolute top-4 right-20 w-6 h-6 bg-white rounded-full"></div>
+          <div class="absolute bottom-4 left-1/4 w-10 h-10 bg-white rounded-full"></div>
+          <div class="absolute bottom-2 right-1/3 w-7 h-7 bg-white rounded-full"></div>
+        </div>
+        
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 text-shadow relative z-10">单词消消乐</h1>
+        <p class="text-xl md:text-2xl text-white font-light relative z-10">Word Match Fun</p>
+      </div>
+    </header>
+
+    <!-- 游戏信息 -->
+    <div class="flex justify-between items-center mb-6 bg-white bg-opacity-80 rounded-lg p-4 shadow-lg">
+      <div class="flex items-center">
+        <div class="bg-accent rounded-full w-12 h-12 flex items-center justify-center mr-3">
+          <i class="fa fa-star text-white text-xl"></i>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">得分</p>
+          <p id="score" class="text-2xl font-bold text-text">0</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center">
+        <div class="bg-secondary rounded-full w-12 h-12 flex items-center justify-center mr-3">
+          <i class="fa fa-clock-o text-white text-xl"></i>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">时间</p>
+          <p id="timer" class="text-2xl font-bold text-text">60</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center">
+        <div class="bg-primary rounded-full w-12 h-12 flex items-center justify-center mr-3">
+          <i class="fa fa-refresh text-white text-xl"></i>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">关卡</p>
+          <p id="level" class="text-2xl font-bold text-text">1</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 词汇量测试界面 -->
+    <div id="vocab-test-screen" class="bg-white bg-opacity-90 rounded-xl shadow-xl p-8 text-center">
+      <h2 class="text-3xl font-bold text-primary mb-6">词汇量测试</h2>
+      <p class="text-lg mb-8">测试你的词汇量，我们将为你推荐合适的难度！</p>
+      
+      <div class="mb-8">
+        <p class="mb-4">请选择你认识的单词：</p>
+        <div id="vocab-test-words" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+          <!-- 测试单词将通过JavaScript动态生成 -->
+        </div>
+      </div>
+      
+      <div class="flex justify-center space-x-4 mb-4">
+        <button id="view-words-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300">
+          查看词库
+        </button>
+        
+        <button id="import-words-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+          导入词库
+        </button>
+        
+        <button id="start-test-btn" class="bg-primary hover:bg-red-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+          开始游戏
+        </button>
+        
+        <button id="quick-start-btn" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
+          快速开始
+        </button>
+      </div>
+      
+      <!-- 导入词库的隐藏输入框 -->
+      <input type="file" id="word-import-input" accept=".json,.txt" class="hidden">
+    </div>
+
+    <!-- 难度选择界面 -->
+    <div id="difficulty-screen" class="hidden bg-white bg-opacity-90 rounded-xl shadow-xl p-8 text-center">
+      <h2 class="text-3xl font-bold text-primary mb-6">选择难度</h2>
+      <p class="text-lg mb-8">根据你的词汇量测试结果，我们推荐 <span id="recommended-difficulty" class="font-bold text-secondary">中等</span> 难度</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-green-50 p-6 rounded-lg border-2 border-transparent hover:border-green-400 cursor-pointer transition-all transform hover:scale-105 difficulty-option" data-difficulty="easy">
+          <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-smile-o text-green-600 text-3xl"></i>
+          </div>
+          <h3 class="font-bold text-green-600 text-xl mb-2">简单</h3>
+          <p class="text-sm text-gray-600">基础词汇，适合初学者</p>
+        </div>
+        
+        <div class="bg-yellow-50 p-6 rounded-lg border-2 border-transparent hover:border-yellow-400 cursor-pointer transition-all transform hover:scale-105 difficulty-option" data-difficulty="medium">
+          <div class="bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-meh-o text-yellow-600 text-3xl"></i>
+          </div>
+          <h3 class="font-bold text-yellow-600 text-xl mb-2">中等</h3>
+          <p class="text-sm text-gray-600">进阶词汇，适合有一定基础的学习者</p>
+        </div>
+        
+        <div class="bg-red-50 p-6 rounded-lg border-2 border-transparent hover:border-red-400 cursor-pointer transition-all transform hover:scale-105 difficulty-option" data-difficulty="hard">
+          <div class="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-frown-o text-red-600 text-3xl"></i>
+          </div>
+          <h3 class="font-bold text-red-600 text-xl mb-2">困难</h3>
+          <p class="text-sm text-gray-600">高级词汇，适合词汇量丰富的学习者</p>
+        </div>
+      </div>
+      
+      <button id="back-to-test-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300">
+        返回测试
+      </button>
+    </div>
+
+    <!-- 游戏开始界面 -->
+    <div id="start-screen" class="hidden bg-white bg-opacity-90 rounded-xl shadow-xl p-8 text-center">
+      <h2 class="text-3xl font-bold text-primary mb-6">准备开始游戏</h2>
+      <p class="text-lg mb-8">找到英文单词与对应的中文意思，将它们配对消除！</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <h3 class="font-bold text-blue-600 mb-2">游戏规则</h3>
+          <ul class="text-left text-sm space-y-2">
+            <li>1. 点击一个英文单词卡片</li>
+            <li>2. 再点击对应的中文意思卡片</li>
+            <li>3. 如果配对成功，卡片会消失</li>
+            <li>4. 如果配对失败，选择会取消</li>
+            <li>5. 在规定时间内消除所有卡片</li>
+          </ul>
+        </div>
+        
+        <div class="bg-green-50 p-4 rounded-lg">
+          <h3 class="font-bold text-green-600 mb-2">游戏技巧</h3>
+          <ul class="text-left text-sm space-y-2">
+            <li>1. 记住单词的位置可以提高速度</li>
+            <li>2. 先尝试匹配你认识的单词</li>
+            <li>3. 每完成一关，难度会增加</li>
+            <li>4. 时间有限，尽快做出选择</li>
+            <li>5. 得分会根据速度和难度计算</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="flex justify-center space-x-6">
+        <button id="start-btn" class="bg-primary hover:bg-red-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+          开始游戏
+        </button>
+        
+        <button id="vocab-book-btn" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
+          生词本
+        </button>
+      </div>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div id="game-screen" class="hidden relative">
+      <!-- 右上角导航菜单 -->
+      <div class="absolute top-2 right-2 sm:top-4 sm:right-4 z-50">
+        <button id="menu-toggle-btn" class="bg-white bg-opacity-90 hover:bg-opacity-100 text-primary font-bold py-1 sm:py-2 px-3 sm:px-4 rounded-full shadow-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary">
+          <i class="fa fa-bars"></i>
+          <span class="ml-1 sm:ml-2 hidden sm:inline">菜单</span>
+        </button>
+        
+        <!-- 下拉菜单 -->
+        <div id="game-menu" class="hidden absolute right-0 mt-2 w-44 sm:w-48 bg-white rounded-xl shadow-2xl overflow-hidden border-2 border-primary z-50">
+          <div class="py-2">
+            <button id="menu-vocab-book-btn" class="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-200 flex items-center">
+              <i class="fa fa-book text-blue-500 mr-3"></i>
+              <span>生词本</span>
+            </button>
+            <button id="menu-word-library-btn" class="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors duration-200 flex items-center">
+              <i class="fa fa-database text-green-500 mr-3"></i>
+              <span>词库管理</span>
+            </button>
+            <button id="menu-settings-btn" class="w-full text-left px-4 py-3 hover:bg-purple-50 transition-colors duration-200 flex items-center">
+              <i class="fa fa-cog text-purple-500 mr-3"></i>
+              <span>设置</span>
+            </button>
+            <button id="menu-score-history-btn" class="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors duration-200 flex items-center">
+              <i class="fa fa-trophy text-orange-500 mr-3"></i>
+              <span>历史得分</span>
+            </button>
+            <div class="border-t border-gray-200 my-1"></div>
+            <button id="menu-home-btn" class="w-full text-left px-4 py-3 hover:bg-red-50 transition-colors duration-200 flex items-center">
+              <i class="fa fa-home text-red-500 mr-3"></i>
+              <span>返回主页</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 游戏卡片区域 -->
+      <div id="game-board" class="grid grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+        <!-- 卡片将通过JavaScript动态生成 -->
+      </div>
+      
+      <!-- 游戏控制按钮 -->
+      <div class="flex justify-center space-x-4">
+        <button id="pause-btn" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
+          <i class="fa fa-pause mr-2"></i>暂停
+        </button>
+        
+        <button id="restart-btn" class="bg-primary hover:bg-red-500 text-white font-bold py-2 px-4 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+          <i class="fa fa-refresh mr-2"></i>重新开始
+        </button>
+      </div>
+    </div>
+
+    <!-- 游戏暂停界面 -->
+    <div id="pause-screen" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl p-8 text-center max-w-md w-full">
+        <h2 class="text-3xl font-bold text-primary mb-6">游戏暂停</h2>
+        <p class="mb-8">点击继续按钮恢复游戏</p>
+        
+        <div class="flex justify-center space-x-4">
+          <button id="resume-btn" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
+            继续游戏
+          </button>
+          
+          <button id="quit-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300">
+            退出游戏
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 游戏结束界面 -->
+    <div id="game-over-screen" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl p-8 text-center max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        <h2 class="text-3xl font-bold text-primary mb-2">游戏结束</h2>
+        <p class="text-xl mb-2">最终得分: <span id="final-score" class="font-bold">0</span></p>
+        <p class="text-xl mb-6">最高纪录: <span id="high-score" class="font-bold">0</span></p>
+        
+        <!-- 未匹配单词列表 -->
+        <div id="unmatched-words-section" class="mb-6">
+          <h3 class="text-xl font-bold text-secondary mb-4">未掌握的单词</h3>
+          <div id="unmatched-words-list" class="text-left max-h-60 overflow-y-auto p-4 bg-gray-50 rounded-lg">
+            <!-- 未匹配单词将通过JavaScript动态生成 -->
+          </div>
+        </div>
+        
+        <div class="flex justify-center space-x-4">
+          <button id="play-again-btn" class="bg-primary hover:bg-red-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+            再玩一次
+          </button>
+          
+          <button id="review-vocab-btn" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
+            复习生词
+          </button>
+          
+          <button id="back-to-menu-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300">
+            返回菜单
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 生词本界面 -->
+    <div id="vocab-book-screen" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl p-8 text-center max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+        <h2 class="text-3xl font-bold text-primary mb-6 flex items-center justify-center">
+        <i class="fa fa-book mr-3 text-4xl"></i>
+        我的魔法单词本
+        <i class="fa fa-star ml-3 text-4xl text-yellow-400"></i>
+      </h2>
+        
+        <div class="mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-secondary">已收集的生词</h3>
+            <div class="flex space-x-2">
+              <button id="export-vocab-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded-full text-sm transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                <i class="fa fa-download mr-1"></i> 导出
+              </button>
+              <button id="clear-vocab-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-4 rounded-full text-sm transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+                <i class="fa fa-trash mr-1"></i> 清空
+              </button>
+            </div>
+          </div>
+          
+          <div id="vocab-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg">
+            <!-- 生词列表将通过JavaScript动态生成 -->
+          </div>
+        </div>
+        
+        <div class="flex justify-center space-x-4">
+          <button id="play-vocab-game-btn" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
+            生词消消乐
+          </button>
+          
+          <button id="close-vocab-book-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300">
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关卡完成界面 -->
+    <div id="level-complete-screen" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl p-8 text-center max-w-md w-full">
+        <h2 class="text-3xl font-bold text-primary mb-2">关卡完成！</h2>
+        <p class="text-xl mb-2">得分: <span id="level-score" class="font-bold">0</span></p>
+        <p class="text-xl mb-2">用时: <span id="time-used" class="font-bold">0</span> 秒</p>
+        <p class="text-xl mb-6">奖励: <span id="bonus-points" class="font-bold">0</span> 分</p>
+        
+        <button id="next-level-btn" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
+          下一关
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 游戏数据
+    const gameData = {
+      currentLevel: 1,
+      score: 0,
+      highScore: localStorage.getItem('wordMatchHighScore') || 0,
+      timeLeft: localStorage.getItem('wordMatchTimeLimit') ? parseInt(localStorage.getItem('wordMatchTimeLimit')) : 60,
+      timerInterval: null,
+      firstCard: null,
+      secondCard: null,
+      lockBoard: false,
+      matchedPairs: 0,
+      totalPairs: 0,
+      gameStarted: false,
+      cards: [],
+      userVocabulary: JSON.parse(localStorage.getItem('userVocabulary')) || [],
+      userDifficulty: localStorage.getItem('userDifficulty') || 'medium',
+      testResults: 0,
+      isVocabGame: false,
+      unmatchedWords: [],
+      usedWords: new Set(), // 跟踪已使用的单词
+      menuOpen: false, // 游戏中菜单状态
+      mainMenuOpen: false, // 主界面菜单状态
+      scoreHistory: JSON.parse(localStorage.getItem('wordMatchScoreHistory')) || [] // 历史得分记录
+    };
+
+    // 词汇量测试单词
+    const vocabTestWordsData = [
+      { english: "hello", chinese: "你好", level: "easy" },
+      { english: "world", chinese: "世界", level: "easy" },
+      { english: "apple", chinese: "苹果", level: "easy" },
+      { english: "book", chinese: "书", level: "easy" },
+      { english: "computer", chinese: "电脑", level: "easy" },
+      { english: "student", chinese: "学生", level: "medium" },
+      { english: "teacher", chinese: "老师", level: "medium" },
+      { english: "language", chinese: "语言", level: "medium" },
+      { english: "programming", chinese: "编程", level: "medium" },
+      { english: "technology", chinese: "技术", level: "medium" },
+      { english: "philosophy", chinese: "哲学", level: "hard" },
+      { english: "psychology", chinese: "心理学", level: "hard" },
+      { english: "sophisticated", chinese: "复杂的", level: "hard" },
+      { english: "ambiguous", chinese: "模糊的", level: "hard" },
+      { english: "paradigm", chinese: "范例", level: "hard" }
+    ];
+
+    // 单词数据 - 按词汇级别分类
+    const wordData = {
+      // 小学词汇
+      primary: [
+        { english: "apple", chinese: "苹果", phonetic: "/ˈæpl/", definition: "一种常见的红色或绿色水果，味道甜脆。", example: "I eat an apple every day." },
+        { english: "banana", chinese: "香蕉", phonetic: "/bəˈnɑːnə/", definition: "一种弯曲的黄色水果，富含钾元素。", example: "She likes to eat bananas for breakfast." },
+        { english: "orange", chinese: "橙子", phonetic: "/ˈɒrɪndʒ/", definition: "一种橙色的柑橘类水果，富含维生素C。", example: "I drink orange juice every morning." },
+        { english: "cat", chinese: "猫", phonetic: "/kæt/", definition: "一种常见的家养宠物，善于捕鼠。", example: "My cat likes to sleep on the sofa." },
+        { english: "dog", chinese: "狗", phonetic: "/dɒɡ/", definition: "一种常见的家养宠物，被称为'人类最好的朋友'。", example: "The dog is barking at the mailman." },
+        { english: "bird", chinese: "鸟", phonetic: "/bɜːd/", definition: "一种有羽毛、能飞行的动物。", example: "The bird is singing in the tree." },
+        { english: "water", chinese: "水", phonetic: "/ˈwɔːtə/", definition: "生命必需的无色无味液体，化学式为H2O。", example: "I need to drink more water." },
+        { english: "food", chinese: "食物", phonetic: "/fuːd/", definition: "人们吃的东西，提供营养和能量。", example: "There is lots of food in the refrigerator." },
+        { english: "book", chinese: "书", phonetic: "/bʊk/", definition: "有封面和内页，包含文字或图片的物品。", example: "I'm reading a good book." },
+        { english: "pen", chinese: "钢笔", phonetic: "/pen/", definition: "一种用于书写的工具。", example: "Can I borrow your pen?" },
+        { english: "school", chinese: "学校", phonetic: "/skuːl/", definition: "学生学习知识的地方。", example: "I go to school every day." },
+        { english: "home", chinese: "家", phonetic: "/həʊm/", definition: "人们居住的地方。", example: "I want to go home." },
+        { english: "teacher", chinese: "老师", phonetic: "/ˈtiːtʃə/", definition: "在学校教书的人。", example: "My teacher is very kind." },
+        { english: "student", chinese: "学生", phonetic: "/ˈstjuːdənt/", definition: "在学校学习的人。", example: "She is a good student." },
+        { english: "friend", chinese: "朋友", phonetic: "/frend/", definition: "与你关系好的人。", example: "He is my best friend." },
+        { english: "family", chinese: "家庭", phonetic: "/ˈfæməli/", definition: "由父母和子女组成的群体。", example: "I love my family." },
+        { english: "mother", chinese: "妈妈", phonetic: "/ˈmʌðə/", definition: "你的女性家长。", example: "My mother cooks delicious food." },
+        { english: "father", chinese: "爸爸", phonetic: "/ˈfɑːðə/", definition: "你的男性家长。", example: "My father works hard." },
+        { english: "sister", chinese: "姐妹", phonetic: "/ˈsɪstə/", definition: "你父母的女儿，比你小或大。", example: "My sister is younger than me." },
+        { english: "brother", chinese: "兄弟", phonetic: "/ˈbrʌðə/", definition: "你父母的儿子，比你小或大。", example: "My brother likes to play football." }
+      ],
+      
+      // 初中词汇
+      junior: [
+        { english: "language", chinese: "语言", phonetic: "/ˈlæŋɡwɪdʒ/", definition: "人们用来交流的系统化的声音、符号和手势。", example: "How many languages do you speak?" },
+        { english: "computer", chinese: "电脑", phonetic: "/kəmˈpjuːtə/", definition: "一种能按照程序指令进行数据处理的电子设备。", example: "I need to buy a new computer." },
+        { english: "technology", chinese: "技术", phonetic: "/tekˈnɒlədʒi/", definition: "应用科学知识解决实际问题的方法和工具。", example: "Technology is changing very fast." },
+        { english: "friendship", chinese: "友谊", phonetic: "/ˈfrendʃɪp/", definition: "朋友之间的感情和关系。", example: "Their friendship lasted for many years." },
+        { english: "knowledge", chinese: "知识", phonetic: "/ˈnɒlɪdʒ/", definition: "通过学习、经验获得的信息和理解。", example: "Knowledge is power." },
+        { english: "opportunity", chinese: "机会", phonetic: "/ˌɒpəˈtjuːnəti/", definition: "有利于实现某种目标的时机。", example: "I had the opportunity to study abroad." },
+        { english: "challenge", chinese: "挑战", phonetic: "/ˈtʃælɪndʒ/", definition: "需要努力才能完成的困难任务。", example: "It's a big challenge for me." },
+        { english: "success", chinese: "成功", phonetic: "/səkˈses/", definition: "实现预定目标或达到理想状态。", example: "His success came from hard work." },
+        { english: "education", chinese: "教育", phonetic: "/ˌedʒuˈkeɪʃn/", definition: "传授知识和技能的过程。", example: "Education is very important." },
+        { english: "experience", chinese: "经验", phonetic: "/ɪksˈpɪəriəns/", definition: "通过亲身经历获得的知识或技能。", example: "She has a lot of teaching experience." },
+        { english: "interest", chinese: "兴趣", phonetic: "/ˈɪntrəst/", definition: "你喜欢做的事情。", example: "He has many interests." },
+        { english: "hobby", chinese: "爱好", phonetic: "/ˈhɒbi/", definition: "你在空闲时间喜欢做的活动。", example: "My hobby is reading books." },
+        { english: "music", chinese: "音乐", phonetic: "/ˈmjuːzɪk/", definition: "由声音组成的艺术形式。", example: "I love listening to music." },
+        { english: "sport", chinese: "运动", phonetic: "/spɔːt/", definition: "体力或智力的竞争性活动。", example: "He is good at sports." },
+        { english: "health", chinese: "健康", phonetic: "/helθ/", definition: "身体和心理的良好状态。", example: "Health is more important than wealth." }
+      ],
+      
+      // 高中词汇
+      senior: [
+        { english: "philosophy", chinese: "哲学", phonetic: "/fəˈlɒsəfi/", definition: "研究存在、知识、价值和理性等基本问题的学科。", example: "He studies philosophy at university." },
+        { english: "psychology", chinese: "心理学", phonetic: "/saɪˈkɒlədʒi/", definition: "研究心理现象和行为的科学。", example: "She has a degree in psychology." },
+        { english: "sophisticated", chinese: "复杂的", phonetic: "/səˈfɪstɪkeɪtɪd/", definition: "结构复杂、精细或先进的。", example: "This is a sophisticated piece of equipment." },
+        { english: "ambiguous", chinese: "模糊的", phonetic: "/æmˈbɪɡjuəs/", definition: "含义不明确、可以有多种解释的。", example: "His statement was ambiguous." },
+        { english: "paradigm", chinese: "范例", phonetic: "/ˈpærədaɪm/", definition: "一种典型的模式或例子，作为某类事物的代表。", example: "This discovery changed the paradigm of modern physics." },
+        { english: "ephemeral", chinese: "短暂的", phonetic: "/ɪˈfemərəl/", definition: "存在时间很短的，转瞬即逝的。", example: "Fame in Hollywood is often ephemeral." },
+        { english: "ubiquitous", chinese: "无所不在的", phonetic: "/juːˈbɪkwɪtəs/", definition: "普遍存在的，几乎在所有地方都能找到的。", example: "Mobile phones are ubiquitous in modern society." },
+        { english: "serendipity", chinese: "意外发现", phonetic: "/ˌserənˈdɪpəti/", definition: "意外发现有价值或惊喜的事物的能力或过程。", example: "The discovery of penicillin was a case of serendipity." },
+        { english: "eloquent", chinese: "雄辩的", phonetic: "/ˈeləkwənt/", definition: "善于表达，能言善辩的。", example: "She gave an eloquent speech." },
+        { english: "meticulous", chinese: "一丝不苟的", phonetic: "/məˈtɪkjələs/", definition: "非常细心、注重细节的。", example: "He is meticulous about his work." },
+        { english: "quintessential", chinese: "典型的", phonetic: "/ˌkwɪntɪˈsenʃl/", definition: "最能代表某类事物本质特征的。", example: "He is the quintessential English gentleman." },
+        { english: "vicarious", chinese: "间接体验的", phonetic: "/vɪˈkeəriəs/", definition: "通过他人的经历而间接感受到的。", example: "I get vicarious pleasure from watching my children succeed." },
+        { english: "perseverance", chinese: "毅力", phonetic: "/ˌpɜːsɪˈvɪərəns/", definition: "坚持做某事的能力。", example: "Perseverance is key to success." },
+        { english: "integrity", chinese: "正直", phonetic: "/ɪnˈteɡrəti/", definition: "诚实和道德原则的品质。", example: "He is a man of integrity." },
+        { english: "ambition", chinese: "雄心", phonetic: "/æmˈbɪʃn/", definition: "强烈的成功欲望。", example: "She has great ambition." }
+      ],
+      
+      // 四级词汇
+      cet4: [
+        { english: "abandon", chinese: "放弃", phonetic: "/əˈbændən/", definition: "停止支持或照顾；放弃。", example: "He abandoned his family." },
+        { english: "ability", chinese: "能力", phonetic: "/əˈbɪləti/", definition: "做某事的能力。", example: "She has the ability to speak three languages." },
+        { english: "abroad", chinese: "在国外", phonetic: "/əˈbrɔːd/", definition: "在或到另一个国家。", example: "He is studying abroad." },
+        { english: "absolute", chinese: "绝对的", phonetic: "/ˈæbsəluːt/", definition: "完全的；无条件的。", example: "I have absolute confidence in him." },
+        { english: "academic", chinese: "学术的", phonetic: "/ˌækəˈdemɪk/", definition: "与教育和学习有关的。", example: "His academic achievements are impressive." },
+        { english: "accelerate", chinese: "加速", phonetic: "/əkˈseləreɪt/", definition: "使速度增加。", example: "The car accelerated quickly." },
+        { english: "according to", chinese: "根据", phonetic: "/əˈkɔːdɪŋ tuː/", definition: "按照；根据。", example: "According to the weather forecast, it will rain tomorrow." },
+        { english: "benefit", chinese: "好处", phonetic: "/ˈbenɪfɪt/", definition: "有助于改善情况的东西。", example: "The new policy will bring many benefits." },
+        { english: "campaign", chinese: "运动", phonetic: "/kæmˈpeɪn/", definition: "为了达到特定目标而进行的一系列活动。", example: "They launched a campaign to raise awareness." },
+        { english: "challenge", chinese: "挑战", phonetic: "/ˈtʃælɪndʒ/", definition: "需要努力才能完成的困难任务。", example: "It's a challenge for me." },
+        { english: "communicate", chinese: "交流", phonetic: "/kəˈmjuːnɪkeɪt/", definition: "与他人分享信息或想法。", example: "We need to communicate better." },
+        { english: "contribute", chinese: "贡献", phonetic: "/kənˈtrɪbjuːt/", definition: "为某事做出贡献。", example: "She contributed a lot to the project." },
+        { english: "critical", chinese: "批评的", phonetic: "/ˈkrɪtɪkl/", definition: "表达不赞成的判断。", example: "He is very critical of the government." },
+        { english: "develop", chinese: "发展", phonetic: "/dɪˈveləp/", definition: "成长或使成长；进步。", example: "The company is developing new products." },
+        { english: "effective", chinese: "有效的", phonetic: "/ɪˈfektɪv/", definition: "产生预期结果的。", example: "The medicine is very effective." }
+      ],
+      
+      // 六级词汇
+      cet6: [
+        { english: "abandon", chinese: "放弃", phonetic: "/əˈbændən/", definition: "停止支持或照顾；放弃。", example: "He abandoned his family." },
+        { english: "abdomen", chinese: "腹部", phonetic: "/ˈæbdəmən/", definition: "身体的中部，在胸部和腿部之间。", example: "He has pain in his abdomen." },
+        { english: "abide by", chinese: "遵守", phonetic: "/əˈbaɪd baɪ/", definition: "遵守规则或决定。", example: "We must abide by the rules." },
+        { english: "abnormal", chinese: "不正常的", phonetic: "/æbˈnɔːml/", definition: "与正常或预期不同的。", example: "His behavior is abnormal." },
+        { english: "abolish", chinese: "废除", phonetic: "/əˈbɒlɪʃ/", definition: "正式结束或停止。", example: "They want to abolish the death penalty." },
+        { english: "abundant", chinese: "丰富的", phonetic: "/əˈbʌndənt/", definition: "大量存在的。", example: "The region has abundant natural resources." },
+        { english: "academic", chinese: "学术的", phonetic: "/ˌækəˈdemɪk/", definition: "与教育和学习有关的。", example: "His academic achievements are impressive." },
+        { english: "accelerate", chinese: "加速", phonetic: "/əkˈseləreɪt/", definition: "使速度增加。", example: "The car accelerated quickly." },
+        { english: "accomplish", chinese: "完成", phonetic: "/əˈkʌmplɪʃ/", definition: "成功完成某事。", example: "She has accomplished a lot in her career." },
+        { english: "accord", chinese: "协议", phonetic: "/əˈkɔːd/", definition: "正式 agreement between two or more groups. 两个或多个团体之间的正式协议。", example: "They reached an accord." },
+        { english: "acknowledge", chinese: "承认", phonetic: "/əkˈnɒlɪdʒ/", definition: "接受或承认某事的存在或真相。", example: "He acknowledged his mistake." },
+        { english: "acquaintance", chinese: "熟人", phonetic: "/əˈkweɪntəns/", definition: "你认识但不是亲密朋友的人。", example: "He is just an acquaintance." },
+        { english: "acquire", chinese: "获得", phonetic: "/əˈkwaɪə/", definition: "通过自己的努力获得。", example: "She acquired a good knowledge of English." },
+        { english: "adapt", chinese: "适应", phonetic: "/əˈdæpt/", definition: "改变以适应新情况。", example: "He adapted quickly to the new environment." },
+        { english: "adequate", chinese: "足够的", phonetic: "/ˈædɪkwət/", definition: "足够好或足够大以满足需求。", example: "The food was adequate." }
+      ],
+      
+      // 专八词汇
+      tem8: [
+        { english: "abandon", chinese: "放弃", phonetic: "/əˈbændən/", definition: "停止支持或照顾；放弃。", example: "He abandoned his family." },
+        { english: "abdomen", chinese: "腹部", phonetic: "/ˈæbdəmən/", definition: "身体的中部，在胸部和腿部之间。", example: "He has pain in his abdomen." },
+        { english: "abide by", chinese: "遵守", phonetic: "/əˈbaɪd baɪ/", definition: "遵守规则或决定。", example: "We must abide by the rules." },
+        { english: "abnormal", chinese: "不正常的", phonetic: "/æbˈnɔːml/", definition: "与正常或预期不同的。", example: "His behavior is abnormal." },
+        { english: "abolish", chinese: "废除", phonetic: "/əˈbɒlɪʃ/", definition: "正式结束或停止。", example: "They want to abolish the death penalty." },
+        { english: "abundant", chinese: "丰富的", phonetic: "/əˈbʌndənt/", definition: "大量存在的。", example: "The region has abundant natural resources." },
+        { english: "academic", chinese: "学术的", phonetic: "/ˌækəˈdemɪk/", definition: "与教育和学习有关的。", example: "His academic achievements are impressive." },
+        { english: "accelerate", chinese: "加速", phonetic: "/əkˈseləreɪt/", definition: "使速度增加。", example: "The car accelerated quickly." },
+        { english: "accomplish", chinese: "完成", phonetic: "/əˈkʌmplɪʃ/", definition: "成功完成某事。", example: "She has accomplished a lot in her career." },
+        { english: "accord", chinese: "协议", phonetic: "/əˈkɔːd/", definition: "正式 agreement between two or more groups. 两个或多个团体之间的正式协议。", example: "They reached an accord." },
+        { english: "acknowledge", chinese: "承认", phonetic: "/əkˈnɒlɪdʒ/", definition: "接受或承认某事的存在或真相。", example: "He acknowledged his mistake." },
+        { english: "acquaintance", chinese: "熟人", phonetic: "/əˈkweɪntəns/", definition: "你认识但不是亲密朋友的人。", example: "He is just an acquaintance." },
+        { english: "acquire", chinese: "获得", phonetic: "/əˈkwaɪə/", definition: "通过自己的努力获得。", example: "She acquired a good knowledge of English." },
+        { english: "adapt", chinese: "适应", phonetic: "/əˈdæpt/", definition: "改变以适应新情况。", example: "He adapted quickly to the new environment." },
+        { english: "adequate", chinese: "足够的", phonetic: "/ˈædɪkwət/", definition: "足够好或足够大以满足需求。", example: "The food was adequate." }
+      ],
+      
+      // 雅思词汇
+      ielts: [
+        { english: "academic", chinese: "学术的", phonetic: "/ˌækəˈdemɪk/", definition: "与教育和学习有关的。", example: "His academic achievements are impressive." },
+        { english: "accommodation", chinese: "住宿", phonetic: "/əˌkɒməˈdeɪʃn/", definition: "居住的地方。", example: "We need to find accommodation for the night." },
+        { english: "achieve", chinese: "实现", phonetic: "/əˈtʃiːv/", definition: "成功完成或获得。", example: "She achieved her goal." },
+        { english: "adapt", chinese: "适应", phonetic: "/əˈdæpt/", definition: "改变以适应新情况。", example: "He adapted quickly to the new environment." },
+        { english: "adequate", chinese: "足够的", phonetic: "/ˈædɪkwət/", definition: "足够好或足够大以满足需求。", example: "The food was adequate." },
+        { english: "advantage", chinese: "优势", phonetic: "/ədˈvɑːntɪdʒ/", definition: "有利的条件或情况。", example: "He has an advantage over the other candidates." },
+        { english: "adventure", chinese: "冒险", phonetic: "/ədˈventʃə/", definition: "令人兴奋和危险的经历。", example: "They went on an adventure in the jungle." },
+        { english: "advocate", chinese: "提倡", phonetic: "/ˈædvəkeɪt/", definition: "公开支持某事。", example: "She advocates for animal rights." },
+        { english: "affect", chinese: "影响", phonetic: "/əˈfekt/", definition: "对某人或某事产生影响。", example: "The weather affected our plans." },
+        { english: "afford", chinese: "买得起", phonetic: "/əˈfɔːd/", definition: "有足够的钱购买。", example: "I can't afford a new car." },
+        { english: "aggregate", chinese: "总计", phonetic: "/ˈæɡrɪɡət/", definition: "总数或总量。", example: "The aggregate of all the scores is 100." },
+        { english: "alleviate", chinese: "减轻", phonetic: "/əˈliːvieɪt/", definition: "使疼痛或问题不那么严重。", example: "The medicine alleviated the pain." },
+        { english: "allocate", chinese: "分配", phonetic: "/ˈæləkeɪt/", definition: "分配或拨出用于特定目的。", example: "They allocated funds for the project." },
+        { english: "alter", chinese: "改变", phonetic: "/ˈɔːltə/", definition: "使或变得不同。", example: "The weather altered our plans." },
+        { english: "alternative", chinese: "替代的", phonetic: "/ɔːlˈtɜːnətɪv/", definition: "可用的另一种选择。", example: "We need to find an alternative solution." }
+      ],
+      
+      // 托福词汇
+      toefl: [
+        { english: "abandon", chinese: "放弃", phonetic: "/əˈbændən/", definition: "停止支持或照顾；放弃。", example: "He abandoned his family." },
+        { english: "ability", chinese: "能力", phonetic: "/əˈbɪləti/", definition: "做某事的能力。", example: "She has the ability to speak three languages." },
+        { english: "abroad", chinese: "在国外", phonetic: "/əˈbrɔːd/", definition: "在或到另一个国家。", example: "He is studying abroad." },
+        { english: "absolute", chinese: "绝对的", phonetic: "/ˈæbsəluːt/", definition: "完全的；无条件的。", example: "I have absolute confidence in him." },
+        { english: "academic", chinese: "学术的", phonetic: "/ˌækəˈdemɪk/", definition: "与教育和学习有关的。", example: "His academic achievements are impressive." },
+        { english: "accelerate", chinese: "加速", phonetic: "/əkˈseləreɪt/", definition: "使速度增加。", example: "The car accelerated quickly." },
+        { english: "according to", chinese: "根据", phonetic: "/əˈkɔːdɪŋ tuː/", definition: "按照；根据。", example: "According to the weather forecast, it will rain tomorrow." },
+        { english: "benefit", chinese: "好处", phonetic: "/ˈbenɪfɪt/", definition: "有助于改善情况的东西。", example: "The new policy will bring many benefits." },
+        { english: "campaign", chinese: "运动", phonetic: "/kæmˈpeɪn/", definition: "为了达到特定目标而进行的一系列活动。", example: "They launched a campaign to raise awareness." },
+        { english: "challenge", chinese: "挑战", phonetic: "/ˈtʃælɪndʒ/", definition: "需要努力才能完成的困难任务。", example: "It's a challenge for me." },
+        { english: "communicate", chinese: "交流", phonetic: "/kəˈmjuːnɪkeɪt/", definition: "与他人分享信息或想法。", example: "We need to communicate better." },
+        { english: "contribute", chinese: "贡献", phonetic: "/kənˈtrɪbjuːt/", definition: "为某事做出贡献。", example: "She contributed a lot to the project." },
+        { english: "critical", chinese: "批评的", phonetic: "/ˈkrɪtɪkl/", definition: "表达不赞成的判断。", example: "He is very critical of the government." },
+        { english: "develop", chinese: "发展", phonetic: "/dɪˈveləp/", definition: "成长或使成长；进步。", example: "The company is developing new products." },
+        { english: "effective", chinese: "有效的", phonetic: "/ɪˈfektɪv/", definition: "产生预期结果的。", example: "The medicine is very effective." }
+      ]
+    };
+
+    // DOM 元素
+    const startScreen = document.getElementById('start-screen');
+    const vocabTestScreen = document.getElementById('vocab-test-screen');
+    const difficultyScreen = document.getElementById('difficulty-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const pauseScreen = document.getElementById('pause-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const levelCompleteScreen = document.getElementById('level-complete-screen');
+    const vocabBookScreen = document.getElementById('vocab-book-screen');
+    const gameBoard = document.getElementById('game-board');
+    const vocabTestWords = document.getElementById('vocab-test-words');
+    const unmatchedWordsList = document.getElementById('unmatched-words-list');
+    const vocabList = document.getElementById('vocab-list');
+    const recommendedDifficulty = document.getElementById('recommended-difficulty');
+    const scoreDisplay = document.getElementById('score');
+    const timerDisplay = document.getElementById('timer');
+    const levelDisplay = document.getElementById('level');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const highScoreDisplay = document.getElementById('high-score');
+    const levelScoreDisplay = document.getElementById('level-score');
+    const timeUsedDisplay = document.getElementById('time-used');
+    const bonusPointsDisplay = document.getElementById('bonus-points');
+
+    // 从指定级别随机选择单词
+    function getRandomWordsFromLevel(level, count) {
+      const levelWords = wordData[level];
+      const shuffled = [...levelWords].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    }
+
+    // 显示词汇量测试界面
+    function showVocabTest() {
+      document.getElementById('vocab-test-screen').classList.remove('hidden');
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('difficulty-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.add('hidden');
+      loadVocabTest();
+    }
+
+    // 显示难度选择界面
+    function showDifficultySelection() {
+      const difficultyScreen = document.getElementById('difficulty-screen');
+      difficultyScreen.classList.remove('hidden');
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('vocab-test-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.add('hidden');
+      
+      // 动态更新难度选择界面，添加自定义词库选项
+      const difficultyGrid = difficultyScreen.querySelector('.grid');
+      
+      // 检查是否已有自定义词库选项
+      let customOption = difficultyScreen.querySelector('[data-difficulty="custom"]');
+      
+      // 如果有自定义词库且还没有添加选项，则添加
+      if (wordData.custom && wordData.custom.length > 0 && !customOption) {
+        const customWordCount = wordData.custom.length;
+        const customDiv = document.createElement('div');
+        customDiv.className = 'bg-purple-50 p-6 rounded-lg border-2 border-transparent hover:border-purple-400 cursor-pointer transition-all transform hover:scale-105 difficulty-option';
+        customDiv.dataset.difficulty = 'custom';
+        customDiv.innerHTML = `
+          <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-book text-purple-600 text-3xl"></i>
+          </div>
+          <h3 class="font-bold text-purple-600 text-xl mb-2">自定义词库</h3>
+          <p class="text-sm text-gray-600">已导入 ${customWordCount} 个单词</p>
+        `;
+        customDiv.addEventListener('click', () => selectDifficulty('custom'));
+        difficultyGrid.appendChild(customDiv);
+      }
+      
+      // 如果自定义词库为空但有选项，则移除
+      if ((!wordData.custom || wordData.custom.length === 0) && customOption) {
+        customOption.remove();
+      }
+    }
+
+    // 按钮事件监听
+    // 主菜单相关
+    document.getElementById('start-test-btn').addEventListener('click', showVocabTest);
+    document.getElementById('quick-start-btn').addEventListener('click', quickStart);
+    document.getElementById('vocab-book-btn').addEventListener('click', openVocabBook);
+    
+    // 查看词库功能
+    document.getElementById('view-words-btn').addEventListener('click', showWordLibrary);
+    
+    // 导入词库功能
+    document.getElementById('import-words-btn').addEventListener('click', () => {
+      document.getElementById('word-import-input').click();
+    });
+    
+    document.getElementById('word-import-input').addEventListener('change', handleWordImport);
+    
+    // 显示词库管理界面
+    function showWordLibrary() {
+      // 创建模态框
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+      modal.id = 'word-library-modal';
+      
+      // 获取所有词库信息
+      const wordLibraryInfo = [];
+      for (const [level, words] of Object.entries(wordData)) {
+        if (Array.isArray(words)) {
+          wordLibraryInfo.push({
+            name: getLevelDisplayName(level),
+            key: level,
+            count: words.length
+          });
+        }
+      }
+      
+      // 词库模板JSON格式
+      const jsonTemplate = [
+        {
+          "english": "example",
+          "chinese": "例子",
+          "phonetic": "/ɪɡˈzɑːmpl/",
+          "definition": "用来解释或说明的事物",
+          "example": "This is a good example."
+        }
+      ];
+      
+      // TXT模板格式
+      const txtTemplate = `hello,你好,/həˈləʊ/
+world,世界,/wɜːrld/
+example,例子,/ɪɡˈzɑːmpl/,用来解释或说明的事物,This is a good example.`;
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-primary">词库管理</h2>
+            <button id="close-library-modal" class="text-gray-500 hover:text-gray-700 text-2xl">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          
+          <!-- 词库统计信息 -->
+          <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4">词库统计</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${wordLibraryInfo.map(lib => `
+                <div class="bg-gray-50 p-4 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 word-library-item" data-level="${lib.key}">
+                  <div class="flex justify-between items-center">
+                    <h4 class="font-bold text-gray-800">${lib.name}</h4>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                  </div>
+                  <p class="text-gray-600">${lib.count} 个单词</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- 导入记录 -->
+          <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4">导入记录</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p class="text-gray-600">
+                ${wordData.custom && wordData.custom.length > 0 
+                  ? `已导入自定义词库，共 ${wordData.custom.length} 个单词` 
+                  : '暂无导入记录'}
+              </p>
+            </div>
+          </div>
+          
+          <!-- 词库模板 -->
+          <div>
+            <h3 class="text-xl font-semibold mb-4">词库模板</h3>
+            
+            <!-- JSON模板 -->
+            <div class="mb-4">
+              <h4 class="font-bold text-gray-800 mb-2">JSON格式模板：</h4>
+              <div class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+                <pre>${JSON.stringify(jsonTemplate, null, 2)}</pre>
+              </div>
+            </div>
+            
+            <!-- TXT模板 -->
+            <div>
+              <h4 class="font-bold text-gray-800 mb-2">TXT格式模板（每行一个单词，用逗号分隔）：</h4>
+              <div class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+                <pre>${txtTemplate}</pre>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 操作按钮 -->
+          <div class="flex justify-center mt-8 space-x-4">
+            <button id="download-json-template" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105">
+              下载JSON模板
+            </button>
+            <button id="download-txt-template" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105">
+              下载TXT模板
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // 关闭模态框
+      document.getElementById('close-library-modal').addEventListener('click', () => {
+        modal.remove();
+      });
+      
+      // 下载JSON模板
+      document.getElementById('download-json-template').addEventListener('click', () => {
+        downloadFile('word_template.json', JSON.stringify(jsonTemplate, null, 2), 'application/json');
+      });
+      
+      // 下载TXT模板
+      document.getElementById('download-txt-template').addEventListener('click', () => {
+        downloadFile('word_template.txt', txtTemplate, 'text/plain');
+      });
+      
+      // 为词库项目添加点击事件
+      setTimeout(() => {
+        document.querySelectorAll('.word-library-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const level = item.dataset.level;
+            showWordList(level);
+          });
+        });
+      }, 100);
+    }
+    
+    // 显示具体词库的单词列表
+    function showWordList(level) {
+      // 创建单词列表模态框
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+      modal.id = 'word-list-modal';
+      
+      const words = wordData[level] || [];
+      const levelName = getLevelDisplayName(level);
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-5xl w-full max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-primary">${levelName} (${words.length}个单词)</h2>
+            <button id="close-word-list-modal" class="text-gray-500 hover:text-gray-700 text-2xl">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          
+          <!-- 搜索和过滤 -->
+          <div class="mb-6">
+            <input type="text" id="word-search-input" placeholder="搜索单词..." 
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <!-- 单词列表 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="word-list-content">
+            ${words.map((word, index) => `
+              <div class="bg-gray-50 p-4 rounded-lg word-item" data-index="${index}">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-800">${word.english}</h4>
+                    <p class="text-gray-600">${word.chinese}</p>
+                    ${word.phonetic ? `<p class="text-sm text-gray-500 italic">${word.phonetic}</p>` : ''}
+                  </div>
+                  <button class="text-blue-500 hover:text-blue-700 text-lg word-detail-btn" data-index="${index}">
+                    <i class="fa fa-info-circle"></i>
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // 关闭模态框
+      document.getElementById('close-word-list-modal').addEventListener('click', () => {
+        modal.remove();
+      });
+      
+      // 搜索功能
+      document.getElementById('word-search-input').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const wordItems = document.querySelectorAll('.word-item');
+        
+        wordItems.forEach(item => {
+          const index = parseInt(item.dataset.index);
+          const word = words[index];
+          const matches = word.english.toLowerCase().includes(searchTerm) || 
+                         word.chinese.toLowerCase().includes(searchTerm);
+          
+          item.style.display = matches ? 'block' : 'none';
+        });
+      });
+      
+      // 单词详情按钮
+      document.querySelectorAll('.word-detail-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const index = parseInt(btn.dataset.index);
+          showWordDetail(words[index]);
+        });
+      });
+    }
+    
+    // 显示单词详情
+    function showWordDetail(word) {
+      // 创建详情模态框
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+      modal.id = 'word-detail-modal';
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-primary">${word.english}</h2>
+            <button id="close-word-detail-modal" class="text-gray-500 hover:text-gray-700 text-2xl">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <p class="text-xl text-gray-800">${word.chinese}</p>
+            ${word.phonetic ? `<p class="text-lg text-gray-600 italic">${word.phonetic}</p>` : ''}
+            ${word.definition ? `<div><strong>释义：</strong><p class="text-gray-700">${word.definition}</p></div>` : ''}
+            ${word.example ? `<div><strong>例句：</strong><p class="text-gray-700 italic">${word.example}</p></div>` : ''}
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // 关闭模态框
+      document.getElementById('close-word-detail-modal').addEventListener('click', () => {
+        modal.remove();
+      });
+    }
+    
+    // 获取词库级别显示名称
+    function getLevelDisplayName(level) {
+      const levelNames = {
+        'primary': '小学词汇',
+        'junior': '初中词汇', 
+        'senior': '高中词汇',
+        'cet4': '四级词汇',
+        'cet6': '六级词汇',
+        'tem8': '专八词汇',
+        'ielts': '雅思词汇',
+        'toefl': '托福词汇',
+        'custom': '自定义词库'
+      };
+      return levelNames[level] || level;
+    }
+    
+    // 下载文件辅助函数
+    function downloadFile(filename, content, contentType) {
+      const blob = new Blob([content], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+
+    // 处理词库导入
+    function handleWordImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          let importedWords = [];
+          
+          // 根据文件类型解析
+          if (file.name.endsWith('.json')) {
+            importedWords = JSON.parse(e.target.result);
+          } else if (file.name.endsWith('.txt')) {
+            // 解析TXT格式，每行一个单词对，格式为 "英文,中文,音标"
+            const lines = e.target.result.split('\n');
+            importedWords = lines.map(line => {
+              const parts = line.split(',');
+              if (parts.length >= 2) {
+                return {
+                  english: parts[0].trim(),
+                  chinese: parts[1].trim(),
+                  phonetic: parts[2] ? parts[2].trim() : '',
+                  definition: parts[3] ? parts[3].trim() : '',
+                  example: parts[4] ? parts[4].trim() : ''
+                };
+              }
+              return null;
+            }).filter(word => word !== null);
+          }
+          
+          // 将导入的单词添加到自定义词库
+          if (importedWords.length > 0) {
+            if (!wordData.custom) {
+              wordData.custom = [];
+            }
+            wordData.custom.push(...importedWords);
+            
+            // 显示成功提示
+            alert(`成功导入 ${importedWords.length} 个单词到自定义词库！`);
+            
+            // 刷新难度选择界面，添加自定义词库选项
+            if (document.getElementById('difficulty-screen').classList.contains('hidden') === false) {
+              showDifficultySelection();
+            }
+          }
+        } catch (error) {
+          alert('导入失败，请检查文件格式是否正确！');
+          console.error('Import error:', error);
+        }
+      };
+      
+      reader.readAsText(file);
+      event.target.value = ''; // 重置文件输入
+    }
+    
+    document.getElementById('start-test-btn').addEventListener('click', startVocabTest);
+    document.getElementById('back-to-test-btn').addEventListener('click', backToVocabTest);
+    document.getElementById('quick-start-btn').addEventListener('click', quickStart);
+    
+    // 难度选择相关
+    document.querySelectorAll('.difficulty-option').forEach(option => {
+      option.addEventListener('click', () => selectDifficulty(option.dataset.difficulty));
+    });
+    
+    // 游戏控制相关
+    document.getElementById('pause-btn').addEventListener('click', pauseGame);
+    document.getElementById('restart-btn').addEventListener('click', restartGame);
+    document.getElementById('resume-btn').addEventListener('click', resumeGame);
+    document.getElementById('quit-btn').addEventListener('click', quitGame);
+    document.getElementById('play-again-btn').addEventListener('click', restartGame);
+    document.getElementById('review-vocab-btn').addEventListener('click', reviewVocabulary);
+    document.getElementById('back-to-menu-btn').addEventListener('click', backToMenu);
+    document.getElementById('next-level-btn').addEventListener('click', nextLevel);
+    
+    // 导航菜单相关
+    document.getElementById('menu-toggle-btn').addEventListener('click', toggleGameMenu);
+    document.getElementById('menu-vocab-book-btn').addEventListener('click', () => {
+      toggleGameMenu();
+      pauseGame();
+      openVocabBook();
+    });
+    document.getElementById('menu-word-library-btn').addEventListener('click', () => {
+      toggleGameMenu();
+      pauseGame();
+      showWordLibrary();
+    });
+    document.getElementById('menu-settings-btn').addEventListener('click', () => {
+      toggleGameMenu();
+      pauseGame();
+      openSettings();
+    });
+    document.getElementById('menu-score-history-btn').addEventListener('click', () => {
+      toggleGameMenu();
+      pauseGame();
+      showScoreHistory();
+    });
+    document.getElementById('menu-home-btn').addEventListener('click', () => {
+      toggleGameMenu();
+      pauseTimer();
+      gameData.gameStarted = false;
+      gameScreen.classList.add('hidden');
+      document.getElementById('vocab-test-screen').classList.remove('hidden');
+    });
+    
+    // 主界面导航菜单相关
+    document.getElementById('main-menu-toggle-btn').addEventListener('click', toggleMainGameMenu);
+    document.getElementById('main-menu-vocab-book-btn').addEventListener('click', () => {
+      toggleMainGameMenu();
+      openVocabBook();
+    });
+    document.getElementById('main-menu-word-library-btn').addEventListener('click', () => {
+      toggleMainGameMenu();
+      showWordLibrary();
+    });
+    document.getElementById('main-menu-settings-btn').addEventListener('click', () => {
+      toggleMainGameMenu();
+      openSettings();
+    });
+    document.getElementById('main-menu-score-history-btn').addEventListener('click', () => {
+      toggleMainGameMenu();
+      showScoreHistory();
+    });
+    
+    // 生词本相关
+    document.getElementById('play-vocab-game-btn').addEventListener('click', playVocabGame);
+    document.getElementById('close-vocab-book-btn').addEventListener('click', closeVocabBook);
+    document.getElementById('export-vocab-btn').addEventListener('click', exportVocabulary);
+    document.getElementById('clear-vocab-btn').addEventListener('click', clearVocabulary);
+    
+    // 点击页面其他地方关闭菜单
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('game-menu');
+      const toggleBtn = document.getElementById('menu-toggle-btn');
+      if (gameData.menuOpen && !menu.contains(e.target) && !toggleBtn.contains(e.target)) {
+        toggleGameMenu();
+      }
+      
+      // 关闭主界面菜单
+      const mainMenu = document.getElementById('main-game-menu');
+      const mainToggleBtn = document.getElementById('main-menu-toggle-btn');
+      if (gameData.mainMenuOpen && !mainMenu.contains(e.target) && !mainToggleBtn.contains(e.target)) {
+        toggleMainGameMenu();
+      }
+    });
+
+    // 开始游戏
+    function startGame() {
+      // 隐藏所有其他界面，显示游戏界面
+      document.getElementById('vocab-test-screen').classList.add('hidden');
+      document.getElementById('difficulty-screen').classList.add('hidden');
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      
+      // 重置游戏数据
+      gameData.score = 0;
+      gameData.timeLeft = 60;
+      gameData.matchedPairs = 0;
+      gameData.isVocabGame = false;
+      gameData.unmatchedWords = [];
+      gameData.currentLevel = 1;
+      gameData.usedWords.clear(); // 清空已使用单词集合
+      
+      updateScore();
+      
+      // 根据选择的难度加载单词
+      loadGameByDifficulty(gameData.userDifficulty);
+      
+      // 开始计时
+      startTimer();
+      
+      gameData.gameStarted = true;
+    }
+
+    // 加载词汇量测试
+    function loadVocabTest() {
+      vocabTestWords.innerHTML = '';
+      
+      // 随机选择10个测试单词
+      const testWords = shuffleArray([...vocabTestWordsData]).slice(0, 10);
+      
+      testWords.forEach(word => {
+        const wordElement = document.createElement('div');
+        wordElement.className = 'bg-white p-3 rounded-lg shadow cursor-pointer transition-all hover:bg-blue-50 hover:scale-105 border-2 border-transparent';
+        wordElement.dataset.word = word.english;
+        wordElement.dataset.level = word.level;
+        wordElement.innerHTML = `
+          <p class="font-bold">${word.english}</p>
+          <p class="text-sm text-gray-500">${word.chinese}</p>
+        `;
+        
+        wordElement.addEventListener('click', () => {
+          wordElement.classList.toggle('border-blue-500');
+          wordElement.classList.toggle('bg-blue-50');
+        });
+        
+        vocabTestWords.appendChild(wordElement);
+      });
+    }
+
+    // 开始词汇量测试
+    function startVocabTest() {
+      const selectedWords = Array.from(vocabTestWords.querySelectorAll('.border-blue-500'));
+      let easyCount = 0;
+      let mediumCount = 0;
+      let hardCount = 0;
+      
+      selectedWords.forEach(word => {
+        const level = word.dataset.level;
+        if (level === 'easy') easyCount++;
+        else if (level === 'medium') mediumCount++;
+        else if (level === 'hard') hardCount++;
+      });
+      
+      // 计算推荐难度
+      let recommendedLevel = 'medium'; // 默认中等
+      if (hardCount >= 3) recommendedLevel = 'hard';
+      else if (easyCount >= 5 && hardCount === 0) recommendedLevel = 'easy';
+      
+      // 更新推荐难度显示
+      const difficultyText = {
+        'easy': '简单',
+        'medium': '中等',
+        'hard': '困难'
+      };
+      recommendedDifficulty.textContent = difficultyText[recommendedLevel];
+      
+      // 保存测试结果
+      gameData.testResults = {
+        total: selectedWords.length,
+        easy: easyCount,
+        medium: mediumCount,
+        hard: hardCount,
+        recommended: recommendedLevel
+      };
+      
+      // 显示难度选择界面
+      vocabTestScreen.classList.add('hidden');
+      difficultyScreen.classList.remove('hidden');
+    }
+
+    // 快速开始游戏（跳过测试和难度选择）
+    function quickStart() {
+      vocabTestScreen.classList.add('hidden');
+      // 默认使用中等难度
+      gameData.userDifficulty = 'medium';
+      startGame();
+    }
+
+    // 返回词汇量测试
+    function backToVocabTest() {
+      difficultyScreen.classList.add('hidden');
+      vocabTestScreen.classList.remove('hidden');
+    }
+
+    // 选择难度
+    function selectDifficulty(difficulty) {
+      gameData.userDifficulty = difficulty;
+      localStorage.setItem('userDifficulty', difficulty);
+      
+      // 直接开始游戏，跳过开始界面
+      difficultyScreen.classList.add('hidden');
+      startGame();
+    }
+
+    // 根据难度加载游戏
+    function loadGameByDifficulty(difficulty) {
+      // 清空游戏板
+      gameBoard.innerHTML = '';
+      
+      // 难度到词库级别的映射
+      const difficultyToLevel = {
+        'easy': 'primary',
+        'medium': 'junior',
+        'hard': 'senior',
+        'expert': 'cet4',
+        'master': 'cet6'
+      };
+      
+      // 根据当前关卡调整难度
+      let currentDifficulty = difficulty;
+      if (gameData.currentLevel > 1) {
+        const difficultyLevels = ['easy', 'medium', 'hard', 'expert', 'master'];
+        const currentIndex = difficultyLevels.indexOf(difficulty);
+        const newIndex = Math.min(currentIndex + gameData.currentLevel - 1, difficultyLevels.length - 1);
+        currentDifficulty = difficultyLevels[newIndex];
+      }
+      
+      // 获取对应难度的单词数据
+      const levelKey = difficultyToLevel[currentDifficulty] || 'junior';
+      const levelWords = wordData[levelKey];
+      
+      // 过滤掉已使用的单词
+      const availableWords = levelWords.filter(word => !gameData.usedWords.has(word.english));
+      
+      // 如果可用单词不足，从其他难度补充
+      let allAvailableWords = [...availableWords];
+      if (availableWords.length < 8) {
+        for (const [key, words] of Object.entries(wordData)) {
+          if (key !== levelKey && Array.isArray(words)) {
+            const additionalWords = words.filter(word => !gameData.usedWords.has(word.english));
+            allAvailableWords.push(...additionalWords);
+          }
+        }
+      }
+      
+      // 随机选择单词（根据难度和关卡调整数量）
+      const baseWordCount = currentDifficulty === 'easy' ? 6 : (currentDifficulty === 'medium' ? 8 : 10);
+      const wordCount = Math.min(baseWordCount + Math.floor((gameData.currentLevel - 1) / 2), 12);
+      const selectedWords = shuffleArray([...allAvailableWords]).slice(0, wordCount);
+      
+      // 标记这些单词为已使用
+      selectedWords.forEach(word => gameData.usedWords.add(word.english));
+      
+      gameData.totalPairs = selectedWords.length;
+      gameData.matchedPairs = 0;
+      
+      // 创建卡片数据
+      gameData.cards = [];
+      
+      // 为每个单词创建英文和中文卡片
+      selectedWords.forEach(word => {
+        // 英文卡片
+        gameData.cards.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'english',
+          content: word.english,
+          pairId: word.english,
+          matched: false,
+          image: word.image,
+          definition: word.definition,
+          chinese: word.chinese,
+          phonetic: word.phonetic,
+          example: word.example
+        });
+        
+        // 中文卡片
+        gameData.cards.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'chinese',
+          content: word.chinese,
+          pairId: word.english,
+          matched: false,
+          image: word.image,
+          definition: word.definition,
+          english: word.english,
+          phonetic: word.phonetic,
+          example: word.example
+        });
+      });
+      
+      // 随机排序卡片
+      gameData.cards = shuffleArray(gameData.cards);
+      
+      // 创建卡片元素
+      gameData.cards.forEach(card => {
+        const cardElement = createCard(card);
+        gameBoard.appendChild(cardElement);
+      });
+      
+      // 调整网格列数 based on 卡片数量和屏幕大小
+      if (gameData.cards.length <= 8) {
+        gameBoard.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mb-6';
+      } else if (gameData.cards.length <= 12) {
+        gameBoard.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-6';
+      } else {
+        gameBoard.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-6';
+      }
+    }
+
+    // 加载关卡
+    function loadLevel(level) {
+      // 清空游戏板
+      gameBoard.innerHTML = '';
+      
+      // 获取当前关卡的单词数据
+      const levelWords = wordData[level - 1];
+      gameData.totalPairs = levelWords.length;
+      gameData.matchedPairs = 0;
+      
+      // 创建卡片数据
+      gameData.cards = [];
+      
+      // 为每个单词创建英文和中文卡片
+      levelWords.forEach(word => {
+        // 英文卡片
+        gameData.cards.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'english',
+          content: word.english,
+          pairId: word.english,
+          matched: false,
+          image: word.image
+        });
+        
+        // 中文卡片
+        gameData.cards.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'chinese',
+          content: word.chinese,
+          pairId: word.english,
+          matched: false,
+          image: word.image
+        });
+      });
+      
+      // 随机排序卡片
+      gameData.cards = shuffleArray(gameData.cards);
+      
+      // 创建卡片元素
+      gameData.cards.forEach(card => {
+        const cardElement = createCard(card);
+        gameBoard.appendChild(cardElement);
+      });
+      
+      // 调整网格列数 based on 卡片数量和屏幕大小
+      if (gameData.cards.length <= 8) {
+        gameBoard.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mb-6';
+      } else if (gameData.cards.length <= 12) {
+        gameBoard.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-6';
+      } else {
+        gameBoard.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-6';
+      }
+    }
+
+    // 创建卡片元素
+    function createCard(cardData) {
+      const cardDiv = document.createElement('div');
+      cardDiv.className = 'w-full h-32 sm:h-36 md:h-44 rounded-xl shadow-xl flex flex-col items-center justify-center p-4 sm:p-6 cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-2xl relative overflow-hidden';
+      cardDiv.dataset.id = cardData.id;
+      
+      // 根据卡片类型设置不同的背景色和样式
+      if (cardData.type === 'english') {
+        cardDiv.classList.add('bg-gradient-to-br', 'from-blue-50', 'to-blue-100', 'border-2', 'border-blue-200');
+      } else {
+        cardDiv.classList.add('bg-gradient-to-br', 'from-green-50', 'to-green-100', 'border-2', 'border-green-200');
+      }
+      
+      // 添加装饰元素
+      const decorCircle = document.createElement('div');
+      decorCircle.className = 'absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-20';
+      decorCircle.style.backgroundColor = cardData.type === 'english' ? '#3B82F6' : '#10B981';
+      cardDiv.appendChild(decorCircle);
+      
+      // 根据内容长度确定字体大小，优化移动端显示
+      let fontSizeClass = 'text-lg sm:text-xl md:text-2xl';
+      if (cardData.content.length > 10) {
+        fontSizeClass = 'text-base sm:text-lg md:text-xl';
+      } else if (cardData.content.length > 6) {
+        fontSizeClass = 'text-base sm:text-lg md:text-xl';
+      }
+      
+      // 卡片内容
+      cardDiv.innerHTML += `
+        <div class="relative z-10 text-center flex flex-col items-center justify-center h-full">
+          <p class="${fontSizeClass} font-bold font-sans ${cardData.type === 'english' ? 'text-blue-700' : 'text-green-700'} mb-1 break-words max-w-full">${cardData.content}</p>
+          ${cardData.phonetic && cardData.type === 'english' ? `<p class="text-xs md:text-sm text-gray-500 italic mt-1">${cardData.phonetic}</p>` : ''}
+        </div>
+      `;
+      
+      // 添加点击事件
+      cardDiv.addEventListener('click', () => selectCard(cardDiv, cardData));
+      
+      return cardDiv;
+    }
+
+    // 选择卡片
+    function selectCard(cardElement, cardData) {
+      // 如果游戏已锁定或卡片已匹配，则不执行操作
+      if (gameData.lockBoard || cardData.matched || cardElement.classList.contains('selected')) {
+        return;
+      }
+      
+      // 如果是第一张卡片或与第一张卡片类型不同（英文和中文）
+      if (!gameData.firstCard || 
+          (gameData.firstCard && gameData.firstCard.type !== cardData.type)) {
+        
+        // 选中卡片
+        cardElement.classList.add('selected', 'ring-4', 'ring-yellow-400');
+        
+        // 如果是第一张卡片
+        if (!gameData.firstCard) {
+          gameData.firstCard = {
+            data: cardData,
+            element: cardElement
+          };
+          return;
+        }
+        
+        // 如果是第二张卡片
+        gameData.secondCard = {
+          data: cardData,
+          element: cardElement
+        };
+        gameData.lockBoard = true;
+        
+        // 检查匹配
+        checkForMatch();
+      }
+    }
+
+    // 检查匹配
+    function checkForMatch() {
+      const isMatch = gameData.firstCard.data.pairId === gameData.secondCard.data.pairId;
+      
+      if (isMatch) {
+        // 匹配成功
+        disableCards();
+        gameData.matchedPairs++;
+        addScore(10);
+        
+        // 检查是否完成所有配对
+        if (gameData.matchedPairs === gameData.totalPairs) {
+          setTimeout(() => {
+            levelComplete();
+          }, 1000);
+        }
+      } else {
+        // 匹配失败
+        deselectCards();
+      }
+    }
+
+    // 禁用已匹配的卡片
+    function disableCards() {
+      // 添加匹配成功的动画 - 消消乐效果
+      gameData.firstCard.element.classList.add('animate-scale-out');
+      gameData.secondCard.element.classList.add('animate-scale-out');
+      
+      // 标记卡片为已匹配
+      gameData.firstCard.data.matched = true;
+      gameData.secondCard.data.matched = true;
+      
+      // 延迟后移除卡片但保持位置
+      setTimeout(() => {
+        gameData.firstCard.element.classList.add('invisible', 'pointer-events-none');
+        gameData.secondCard.element.classList.add('invisible', 'pointer-events-none');
+        
+        // 添加粒子爆炸效果
+        createParticleEffect(gameData.firstCard.element);
+        createParticleEffect(gameData.secondCard.element);
+        
+        resetBoard();
+      }, 300);
+    }
+
+    // 取消选择卡片
+    function deselectCards() {
+      // 添加匹配失败的动画
+      gameData.firstCard.element.classList.add('animate-shake');
+      gameData.secondCard.element.classList.add('animate-shake');
+      
+      // 延迟后取消选择
+      setTimeout(() => {
+        gameData.firstCard.element.classList.remove('selected', 'ring-4', 'ring-yellow-400', 'animate-shake');
+        gameData.secondCard.element.classList.remove('selected', 'ring-4', 'ring-yellow-400', 'animate-shake');
+        
+        // 清除选择
+        resetBoard();
+      }, 1000);
+    }
+
+    // 重置游戏板状态
+    function resetBoard() {
+      [gameData.firstCard, gameData.secondCard] = [null, null];
+      gameData.lockBoard = false;
+    }
+
+    // 添加分数
+    function addScore(points) {
+      gameData.score += points;
+      updateScore();
+    }
+
+    // 更新分数显示
+    function updateScore() {
+      scoreDisplay.textContent = gameData.score;
+    }
+
+    // 更新关卡显示
+    function updateLevel() {
+      levelDisplay.textContent = gameData.currentLevel;
+    }
+
+    // 开始计时器
+    function startTimer() {
+      clearInterval(gameData.timerInterval);
+      
+      gameData.timerInterval = setInterval(() => {
+        gameData.timeLeft--;
+        timerDisplay.textContent = gameData.timeLeft;
+        
+        // 时间用完游戏结束
+        if (gameData.timeLeft <= 0) {
+          clearInterval(gameData.timerInterval);
+          gameOver();
+        }
+      }, 1000);
+    }
+
+    // 暂停计时器
+    function pauseTimer() {
+      clearInterval(gameData.timerInterval);
+    }
+
+    // 暂停游戏
+    function pauseGame() {
+      if (!gameData.gameStarted) return;
+      
+      pauseTimer();
+      gameScreen.classList.add('hidden');
+      pauseScreen.classList.remove('hidden');
+    }
+
+    // 恢复游戏
+    function resumeGame() {
+      pauseScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      
+      startTimer();
+    }
+
+    // 切换游戏菜单显示/隐藏
+    function toggleGameMenu() {
+      const menu = document.getElementById('game-menu');
+      gameData.menuOpen = !gameData.menuOpen;
+      
+      if (gameData.menuOpen) {
+        menu.classList.remove('hidden');
+        // 添加简单的显示动画
+        menu.style.opacity = '0';
+        menu.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+          menu.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+          menu.style.opacity = '1';
+          menu.style.transform = 'translateY(0)';
+        }, 10);
+      } else {
+        // 添加简单的隐藏动画
+        menu.style.opacity = '0';
+        menu.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+          menu.classList.add('hidden');
+          menu.style.transition = '';
+          menu.style.opacity = '';
+          menu.style.transform = '';
+        }, 200);
+      }
+    }
+    
+    // 重新开始游戏
+    function restartGame() {
+      // 隐藏所有弹窗
+      gameOverScreen.classList.add('hidden');
+      levelCompleteScreen.classList.add('hidden');
+      pauseScreen.classList.add('hidden');
+      
+      // 重置游戏数据
+      gameData.score = 0;
+      gameData.timeLeft = 60;
+      gameData.matchedPairs = 0;
+      gameData.currentLevel = 1;
+      gameData.usedWords.clear(); // 清空已使用单词集合
+      
+      updateScore();
+      updateLevel();
+      
+      // 重新加载当前关卡
+      loadGameByDifficulty(gameData.userDifficulty);
+      
+      // 开始计时
+      startTimer();
+      
+      gameData.gameStarted = true;
+      gameScreen.classList.remove('hidden');
+    }
+
+    // 退出游戏
+    function quitGame() {
+      pauseTimer();
+      pauseScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+      gameData.gameStarted = false;
+    }
+
+    // 返回主菜单
+    function backToMenu() {
+      gameOverScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+      gameData.gameStarted = false;
+    }
+
+    // 游戏结束
+    function gameOver() {
+      pauseTimer();
+      
+      // 收集未匹配的单词
+      collectUnmatchedWords();
+      
+      // 更新最高分
+      if (gameData.score > gameData.highScore) {
+        gameData.highScore = gameData.score;
+        localStorage.setItem('wordMatchHighScore', gameData.highScore);
+      }
+      
+      // 保存历史得分记录
+      const scoreRecord = {
+        score: gameData.score,
+        level: gameData.currentLevel,
+        difficulty: gameData.userDifficulty,
+        date: new Date().toISOString()
+      };
+      
+      gameData.scoreHistory.push(scoreRecord);
+      
+      // 只保留最近50条记录
+      if (gameData.scoreHistory.length > 50) {
+        gameData.scoreHistory = gameData.scoreHistory.slice(-50);
+      }
+      
+      localStorage.setItem('wordMatchScoreHistory', JSON.stringify(gameData.scoreHistory));
+      
+      // 更新显示
+      finalScoreDisplay.textContent = gameData.score;
+      highScoreDisplay.textContent = gameData.highScore;
+      
+      // 显示未匹配单词列表
+      displayUnmatchedWords();
+      
+      // 显示游戏结束界面
+      gameScreen.classList.add('hidden');
+      gameOverScreen.classList.remove('hidden');
+      
+      gameData.gameStarted = false;
+    }
+
+    // 收集未匹配的单词
+    function collectUnmatchedWords() {
+      gameData.unmatchedWords = [];
+      const unmatchedPairs = new Set();
+      
+      // 找出所有未匹配的卡片
+      gameData.cards.forEach(card => {
+        if (!card.matched) {
+          unmatchedPairs.add(card.pairId);
+        }
+      });
+      
+      // 收集单词详细信息
+      unmatchedPairs.forEach(wordId => {
+        const englishCard = gameData.cards.find(card => card.pairId === wordId && card.type === 'english');
+        const chineseCard = gameData.cards.find(card => card.pairId === wordId && card.type === 'chinese');
+        
+        if (englishCard && chineseCard) {
+          gameData.unmatchedWords.push({
+            english: englishCard.content,
+            chinese: chineseCard.content,
+            definition: englishCard.definition || '',
+            phonetic: englishCard.phonetic || '',
+            example: englishCard.example || ''
+          });
+          
+          // 添加到生词本
+          addToVocabulary({
+            english: englishCard.content,
+            chinese: chineseCard.content,
+            definition: englishCard.definition || '',
+            phonetic: englishCard.phonetic || '',
+            example: englishCard.example || '',
+            addedDate: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    // 显示未匹配单词列表
+    function displayUnmatchedWords() {
+      unmatchedWordsList.innerHTML = '';
+      
+      if (gameData.unmatchedWords.length === 0) {
+        unmatchedWordsList.innerHTML = '<p class="text-center text-gray-500">恭喜！你匹配了所有单词！</p>';
+        return;
+      }
+      
+      const wordList = document.createElement('ul');
+      wordList.className = 'space-y-2';
+      
+      gameData.unmatchedWords.forEach(word => {
+        const listItem = document.createElement('li');
+        listItem.className = 'p-2 hover:bg-gray-100 rounded';
+        listItem.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="font-bold text-blue-600">${word.english}</span>
+              <span class="text-green-500 ml-2 italic text-sm">${word.phonetic || ''}</span>
+              <span class="text-gray-600 ml-2">${word.chinese}</span>
+            </div>
+            <button class="text-red-500 hover:text-red-700 save-word-btn" data-english="${word.english}" data-chinese="${word.chinese}" data-definition="${word.definition}" data-phonetic="${word.phonetic || ''}" data-example="${word.example || ''}">
+              <i class="fa fa-plus-circle"></i>
+            </button>
+          </div>
+          <p class="text-sm text-gray-500 mt-1">${word.definition}</p>
+          <p class="text-xs text-gray-400 mt-1 italic">例: ${word.example || '无例句'}</p>
+        `;
+        wordList.appendChild(listItem);
+      });
+      
+      unmatchedWordsList.appendChild(wordList);
+      
+      // 添加保存单词到生词本的事件监听
+      document.querySelectorAll('.save-word-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const english = e.target.dataset.english;
+          const chinese = e.target.dataset.chinese;
+          const definition = e.target.dataset.definition;
+          const phonetic = e.target.dataset.phonetic || '';
+          const example = e.target.dataset.example || '';
+          
+          addToVocabulary({
+            english,
+            chinese,
+            definition,
+            phonetic,
+            example,
+            addedDate: new Date().toISOString()
+          });
+          
+          e.target.innerHTML = '<i class="fa fa-check-circle"></i>';
+          e.target.disabled = true;
+          e.target.classList.remove('text-red-500', 'hover:text-red-700');
+          e.target.classList.add('text-green-500');
+        });
+      });
+    }
+
+    // 添加单词到生词本
+    function addToVocabulary(word) {
+      // 检查是否已存在
+      const existingIndex = gameData.userVocabulary.findIndex(w => w.english === word.english);
+      
+      if (existingIndex === -1) {
+        // 添加新单词
+        gameData.userVocabulary.push(word);
+      } else {
+        // 更新已存在的单词
+        gameData.userVocabulary[existingIndex] = {
+          ...gameData.userVocabulary[existingIndex],
+          ...word,
+          reviewCount: (gameData.userVocabulary[existingIndex].reviewCount || 0) + 1
+        };
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('userVocabulary', JSON.stringify(gameData.userVocabulary));
+    }
+
+    // 关卡完成
+    function levelComplete() {
+      pauseTimer();
+      
+      // 计算奖励分数（基于剩余时间）
+      const timeUsed = 60 - gameData.timeLeft;
+      const bonusPoints = Math.max(0, Math.floor(gameData.timeLeft / 2));
+      addScore(bonusPoints);
+      
+      // 更新显示
+      levelScoreDisplay.textContent = gameData.score;
+      timeUsedDisplay.textContent = timeUsed;
+      bonusPointsDisplay.textContent = bonusPoints;
+      
+      // 显示关卡完成界面
+      gameScreen.classList.add('hidden');
+      levelCompleteScreen.classList.remove('hidden');
+      
+      // 创建庆祝效果
+      createConfetti();
+    }
+
+    // 下一关
+    function nextLevel() {
+      levelCompleteScreen.classList.add('hidden');
+      
+      // 清理所有confetti元素
+      const confettiElements = document.querySelectorAll('.confetti');
+      confettiElements.forEach(confetti => confetti.remove());
+      
+      // 增加关卡
+      gameData.currentLevel++;
+      
+      // 检查是否有更多关卡
+      if (gameData.currentLevel > Object.keys(wordData).length) {
+        // 所有关卡完成，显示游戏胜利
+        alert('恭喜你完成了所有关卡！');
+        backToMenu();
+        return;
+      }
+      
+      // 更新关卡显示
+      updateLevel();
+      
+      // 设置时间（随关卡增加而减少）
+      gameData.timeLeft = Math.max(30, 60 - (gameData.currentLevel - 1) * 5);
+      timerDisplay.textContent = gameData.timeLeft;
+      
+      // 加载下一关
+      loadGameByDifficulty(gameData.userDifficulty);
+      
+      // 开始计时
+      startTimer();
+      
+      gameScreen.classList.remove('hidden');
+    }
+
+    // 创建粒子爆炸效果
+    function createParticleEffect(element) {
+      const rect = element.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const colors = ['#FF6B6B', '#4ECDC4', '#FFD166', '#06D6A0', '#118AB2'];
+      
+      for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'absolute w-3 h-3 rounded-full pointer-events-none';
+        particle.style.left = `${centerX}px`;
+        particle.style.top = `${centerY}px`;
+        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.transform = 'translate(-50%, -50%)';
+        particle.style.zIndex = '1000';
+        
+        document.body.appendChild(particle);
+        
+        // 随机爆炸方向和距离
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 30 + Math.random() * 40;
+        const duration = 0.6 + Math.random() * 0.4;
+        
+        // 动画
+        particle.animate([
+          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance}px)) scale(0)`, opacity: 0 }
+        ], {
+          duration: duration * 1000,
+          easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        });
+        
+        // 动画结束后移除元素
+        setTimeout(() => {
+          particle.remove();
+        }, duration * 1000);
+      }
+    }
+
+    // 创建庆祝典礼花效果
+    function createConfetti() {
+      const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+      
+      for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = `${Math.random() * 100}vw`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = `${Math.random() * 5}s`;
+        
+        document.body.appendChild(confetti);
+        
+        // 动画结束后移除元素
+        setTimeout(() => {
+          confetti.remove();
+        }, 5000);
+      }
+    }
+
+    // 生词本相关功能
+    function openVocabBook() {
+      startScreen.classList.add('hidden');
+      vocabBookScreen.classList.remove('hidden');
+      updateVocabList();
+    }
+
+    function closeVocabBook() {
+      vocabBookScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+    }
+
+    function updateVocabList() {
+      vocabList.innerHTML = '';
+      
+      if (gameData.userVocabulary.length === 0) {
+        vocabList.innerHTML = '<p class="text-center text-gray-500">你的生词本是空的！</p>';
+        return;
+      }
+      
+      const wordList = document.createElement('ul');
+      wordList.className = 'space-y-3';
+      
+      gameData.userVocabulary.forEach((word, index) => {
+        const listItem = document.createElement('li');
+        listItem.className = 'p-5 bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 border-2 border-blue-100 relative overflow-hidden group';
+        listItem.innerHTML = `
+          <div class="absolute top-0 right-0 w-20 h-20 bg-blue-100 rounded-bl-full opacity-30"></div>
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <span class="font-bold text-blue-600 text-xl">${word.english}</span>
+              <span class="text-green-500 ml-2 italic text-sm font-medium">${word.phonetic || ''}</span>
+            </div>
+            <button class="text-gray-400 hover:text-red-500 transition-colors duration-300 remove-word-btn group-hover:scale-110" data-index="${index}">
+              <i class="fa fa-trash text-lg"></i>
+            </button>
+          </div>
+          <div class="bg-white bg-opacity-70 p-3 rounded-lg mb-3">
+            <p class="text-lg text-gray-800 font-medium">${word.chinese}</p>
+            <p class="text-sm text-gray-600 mt-1">${word.definition}</p>
+          </div>
+          <div class="bg-green-50 p-3 rounded-lg border-l-4 border-green-400">
+            <p class="text-sm text-gray-700 italic">例: ${word.example || '无例句'}</p>
+          </div>
+          <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
+            <span><i class="fa fa-calendar mr-1"></i> ${new Date(word.addedDate).toLocaleDateString()}</span>
+            <span><i class="fa fa-refresh mr-1"></i> 已复习 ${word.reviewCount || 0} 次</span>
+          </div>
+        `;
+        wordList.appendChild(listItem);
+      });
+      
+      vocabList.appendChild(wordList);
+      
+      // 添加删除单词的事件监听
+      document.querySelectorAll('.remove-word-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.target.dataset.index);
+          removeFromVocabulary(index);
+        });
+      });
+    }
+
+    function removeFromVocabulary(index) {
+      gameData.userVocabulary.splice(index, 1);
+      localStorage.setItem('userVocabulary', JSON.stringify(gameData.userVocabulary));
+      updateVocabList();
+    }
+
+    function exportVocabulary() {
+      if (gameData.userVocabulary.length === 0) {
+        alert('你的生词本是空的！');
+        return;
+      }
+      
+      let csvContent = "英文,中文,释义,添加时间,复习次数\n";
+      
+      gameData.userVocabulary.forEach(word => {
+        csvContent += `"${word.english}","${word.chinese}","${word.definition}","${word.addedDate}","${word.reviewCount || 0}"\n`;
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `vocabulary_book_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function clearVocabulary() {
+      if (gameData.userVocabulary.length === 0) {
+        alert('你的生词本已经是空的！');
+        return;
+      }
+      
+      if (confirm('确定要清空生词本吗？此操作不可恢复！')) {
+        gameData.userVocabulary = [];
+        localStorage.removeItem('userVocabulary');
+        updateVocabList();
+      }
+    }
+
+    function playVocabGame() {
+      if (gameData.userVocabulary.length < 6) {
+        alert('生词本中的单词数量不足，至少需要6个单词才能进行游戏！');
+        return;
+      }
+      
+      vocabBookScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      
+      // 重置游戏数据
+      gameData.score = 0;
+      gameData.timeLeft = 60;
+      gameData.matchedPairs = 0;
+      gameData.isVocabGame = true;
+      gameData.unmatchedWords = [];
+      
+      updateScore();
+      
+      // 加载生词本中的单词
+      loadVocabGame();
+      
+      // 开始计时
+      startTimer();
+      
+      gameData.gameStarted = true;
+    }
+
+    function loadVocabGame() {
+      // 清空游戏板
+      gameBoard.innerHTML = '';
+      
+      // 从生词本中随机选择单词
+      const selectedWords = shuffleArray([...gameData.userVocabulary]).slice(0, Math.min(8, gameData.userVocabulary.length));
+      
+      gameData.totalPairs = selectedWords.length;
+      gameData.matchedPairs = 0;
+      
+      // 创建卡片数据
+      gameData.cards = [];
+      
+      // 为每个单词创建英文和中文卡片
+      selectedWords.forEach(word => {
+        // 英文卡片
+        gameData.cards.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'english',
+          content: word.english,
+          pairId: word.english,
+          matched: false,
+          definition: word.definition,
+          chinese: word.chinese
+        });
+        
+        // 中文卡片
+        gameData.cards.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'chinese',
+          content: word.chinese,
+          pairId: word.english,
+          matched: false,
+          definition: word.definition,
+          english: word.english
+        });
+      });
+      
+      // 随机排序卡片
+      gameData.cards = shuffleArray(gameData.cards);
+      
+      // 创建卡片元素
+      gameData.cards.forEach(card => {
+        const cardElement = createCard(card);
+        gameBoard.appendChild(cardElement);
+      });
+      
+      // 调整网格列数
+      gameBoard.className = 'grid grid-cols-3 md:grid-cols-4 gap-4 mb-6';
+    }
+
+    function reviewVocabulary() {
+      gameOverScreen.classList.add('hidden');
+      vocabBookScreen.classList.remove('hidden');
+      updateVocabList();
+    }
+
+    // 辅助函数：随机排序数组
+    function shuffleArray(array) {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    }
+
+    // 初始化游戏
+    function init() {
+      // 显示词汇量测试界面
+      vocabTestScreen.classList.remove('hidden');
+      loadVocabTest();
+      
+      // 更新最高分显示
+      highScoreDisplay.textContent = gameData.highScore;
+    }
+
+    // 启动游戏
+    init();
+    // 切换主界面菜单
+    function toggleMainGameMenu() {
+      const menu = document.getElementById('main-game-menu');
+      gameData.mainMenuOpen = !gameData.mainMenuOpen;
+      menu.classList.toggle('hidden', !gameData.mainMenuOpen);
+    }
+    
+    // 打开设置界面
+    function openSettings() {
+      // 创建设置模态框
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+      modal.id = 'settings-modal';
+      
+      const currentTimeLimit = gameData.timeLeft;
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-primary">游戏设置</h2>
+            <button id="close-settings-modal" class="text-gray-500 hover:text-gray-700 text-2xl">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          
+          <!-- 倒计时设置 -->
+          <div class="mb-8">
+            <label class="block text-gray-700 font-bold mb-2">游戏倒计时时间（秒）</label>
+            <div class="flex items-center space-x-4">
+              <button id="time-decrease" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                <i class="fa fa-minus"></i>
+              </button>
+              <input type="number" id="time-limit-input" value="${currentTimeLimit}" min="30" max="300" step="10"
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-primary">
+              <button id="time-increase" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                <i class="fa fa-plus"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2 text-center">建议时间：60-120秒</p>
+          </div>
+          
+          <!-- 应用按钮 -->
+          <div class="flex justify-center">
+            <button id="apply-settings-btn" class="bg-primary hover:bg-red-500 text-white font-bold py-2 px-8 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+              应用设置
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // 关闭模态框
+      document.getElementById('close-settings-modal').addEventListener('click', () => {
+        modal.remove();
+      });
+      
+      // 增减时间按钮
+      document.getElementById('time-decrease').addEventListener('click', () => {
+        const input = document.getElementById('time-limit-input');
+        let value = parseInt(input.value);
+        if (value > 30) {
+          input.value = Math.max(30, value - 10);
+        }
+      });
+      
+      document.getElementById('time-increase').addEventListener('click', () => {
+        const input = document.getElementById('time-limit-input');
+        let value = parseInt(input.value);
+        if (value < 300) {
+          input.value = Math.min(300, value + 10);
+        }
+      });
+      
+      // 应用设置
+      document.getElementById('apply-settings-btn').addEventListener('click', () => {
+        const input = document.getElementById('time-limit-input');
+        const newTimeLimit = parseInt(input.value);
+        
+        if (newTimeLimit >= 30 && newTimeLimit <= 300) {
+          // 保存设置到localStorage
+          localStorage.setItem('wordMatchTimeLimit', newTimeLimit.toString());
+          
+          // 更新游戏数据
+          gameData.timeLeft = newTimeLimit;
+          
+          // 如果游戏正在进行，更新显示
+          if (gameData.gameStarted) {
+            timerDisplay.textContent = newTimeLimit;
+          }
+          
+          // 显示成功提示
+          alert('设置已保存！');
+          modal.remove();
+        } else {
+          alert('请输入30-300之间的时间！');
+        }
+      });
+    }
+    
+    // 显示历史得分记录
+    function showScoreHistory() {
+      // 创建历史得分模态框
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+      modal.id = 'score-history-modal';
+      
+      const history = gameData.scoreHistory;
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-primary">历史得分记录</h2>
+            <button id="close-score-history-modal" class="text-gray-500 hover:text-gray-700 text-2xl">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          
+          ${history.length === 0 ? `
+            <div class="text-center py-8">
+              <i class="fa fa-trophy text-4xl text-gray-300 mb-4"></i>
+              <p class="text-gray-500 text-lg">还没有游戏记录，快去挑战吧！</p>
+            </div>
+          ` : `
+            <div class="space-y-4">
+              ${history.slice(-10).reverse().map((record, index) => `
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-primary">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <p class="font-bold text-gray-800">得分: ${record.score}</p>
+                      <p class="text-sm text-gray-600">关卡: ${record.level} | 难度: ${getDifficultyName(record.difficulty)}</p>
+                    </div>
+                    <p class="text-sm text-gray-500">${formatDate(record.date)}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+          
+          ${history.length > 0 ? `
+            <div class="mt-6 flex justify-between items-center">
+              <div>
+                <p class="text-sm text-gray-600">总游戏次数: ${history.length}</p>
+                <p class="text-sm text-gray-600">最高得分: ${Math.max(...history.map(r => r.score))}</p>
+              </div>
+              <button id="clear-score-history-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-4 rounded-full text-sm transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+                <i class="fa fa-trash mr-1"></i> 清空记录
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // 关闭模态框
+      document.getElementById('close-score-history-modal').addEventListener('click', () => {
+        modal.remove();
+      });
+      
+      // 清空记录按钮
+      if (history.length > 0) {
+        document.getElementById('clear-score-history-btn').addEventListener('click', () => {
+          if (confirm('确定要清空所有历史得分记录吗？')) {
+            gameData.scoreHistory = [];
+            localStorage.removeItem('wordMatchScoreHistory');
+            modal.remove();
+            showScoreHistory(); // 重新显示空的历史记录
+          }
+        });
+      }
+    }
+    
+    // 获取难度显示名称
+    function getDifficultyName(difficulty) {
+      const names = {
+        'easy': '简单',
+        'medium': '中等',
+        'hard': '困难',
+        'expert': '专家',
+        'master': '大师',
+        'custom': '自定义'
+      };
+      return names[difficulty] || difficulty;
+    }
+    
+    // 格式化日期
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = now - date;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      
+      if (days === 0) {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        if (hours === 0) {
+          const minutes = Math.floor(diff / (1000 * 60));
+          return minutes <= 1 ? '刚刚' : `${minutes}分钟前`;
+        }
+        return `${hours}小时前`;
+      } else if (days === 1) {
+        return '昨天';
+      } else if (days < 7) {
+        return `${days}天前`;
+      } else {
+        return date.toLocaleDateString('zh-CN');
+      }
+    }
+  </script>
+</body>
+</html>
